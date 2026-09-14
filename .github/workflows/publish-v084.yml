@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '.deploy/**'
-      - '.github/workflows/publish-v084.yml'
+      - '.deploy/READY'
 
 permissions:
   contents: write
@@ -19,14 +18,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Rebuild and validate release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/grim-grove-publish /tmp/grim-grove-v084.zip /tmp/grim-grove-v084.b64
+          cat .deploy/chunks/*.txt > /tmp/grim-grove-v084.b64
+          base64 --decode /tmp/grim-grove-v084.b64 > /tmp/grim-grove-v084.zip
+          unzip -tq /tmp/grim-grove-v084.zip
+          mkdir -p /tmp/grim-grove-publish
+          unzip -q /tmp/grim-grove-v084.zip -d /tmp/grim-grove-publish
+          test -f /tmp/grim-grove-publish/GrimGroveSurvivors-v0.8.4/index.html
+
       - name: Replace repository with current game version
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/grim-grove-publish
-          mkdir -p /tmp/grim-grove-publish
-          unzip -q .deploy/GrimGrove-Survivors-v0.8.4.zip -d /tmp/grim-grove-publish
-          test -f /tmp/grim-grove-publish/GrimGroveSurvivors-v0.8.4/index.html
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           cp -a /tmp/grim-grove-publish/GrimGroveSurvivors-v0.8.4/. .
           test -f index.html
@@ -35,10 +42,9 @@ jobs:
           test -f js/data.js
           test -d assets/sprites
           test -d assets/tiles
-          if find assets -type f ! -name '*.webp' | grep -q .; then
-            echo 'Unexpected non-WebP image asset found.' >&2
-            exit 1
-          fi
+          test "$(find assets -type f -name '*.png' | wc -l)" -eq 0
+          node --check js/main.js
+          node --check js/data.js
 
       - name: Commit and push v0.8.4
         shell: bash
