@@ -1,0 +1,51 @@
+name: Publish Grim Grove v0.8.4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.deploy/**'
+      - '.github/workflows/publish-v084.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace repository with current game version
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/grim-grove-publish
+          mkdir -p /tmp/grim-grove-publish
+          unzip -q .deploy/GrimGrove-Survivors-v0.8.4.zip -d /tmp/grim-grove-publish
+          test -f /tmp/grim-grove-publish/GrimGroveSurvivors-v0.8.4/index.html
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -a /tmp/grim-grove-publish/GrimGroveSurvivors-v0.8.4/. .
+          test -f index.html
+          test -f css/style.css
+          test -f js/main.js
+          test -f js/data.js
+          test -d assets/sprites
+          test -d assets/tiles
+          if find assets -type f ! -name '*.webp' | grep -q .; then
+            echo 'Unexpected non-WebP image asset found.' >&2
+            exit 1
+          fi
+
+      - name: Commit and push v0.8.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Publish Grim Grove Survivors v0.8.4'
+          git push origin HEAD:main
