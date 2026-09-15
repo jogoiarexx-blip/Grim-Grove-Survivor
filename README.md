@@ -1,4 +1,20 @@
-## Atualização v0.10.1
+# Grim Grove Survivors — v0.11.0
+
+## Atualização estrutural completa
+
+- Loading real e descarregamento por fase.
+- Configuração separada por fase e AssetManager.
+- SpatialGrid e ObjectPool.
+- Colisão do jogador, inimigos e projéteis com cenário.
+- Spawn seguro.
+- Cadáveres temporários e telegraph de boss.
+- Minimap, gamepad e joystick mobile.
+- Save versionado com backup.
+- Áudio WAV por fase e SFX.
+- PWA com manifest e service worker.
+- Progresso de campanha na tela de resultados.
+
+## Atualização v0.11.0
 
 - Substituídos no jogo os placeholders de **XP, vida e baús** por sprites reais em pixel art.
 - Os drops de XP agora usam atlas animado com variações para orbe pequeno, orbe forte e cluster/XP aglomerado.
@@ -12,7 +28,7 @@
   - santuários
 - Todos os itens novos foram adicionados em `assets/sprites/items/` em WebP.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Criadas **bordas reais de transição** entre terrenos usando diferenças de máscara entre tiles vizinhos.
 - As transições agora não são só manchas com alpha: elas ganham **bordas visuais** com sombreado e linha orgânica nas laterais do terreno de transição.
@@ -31,7 +47,7 @@ Como funciona a colisão:
 2. após o movimento do jogador, o jogo testa os obstáculos próximos;
 3. se houver interseção, o personagem é empurrado para fora do volume sólido.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - O sistema de **atlas variado de chão** agora foi expandido para **todas as fases**.
 - Cada bioma agora possui:
@@ -69,7 +85,7 @@ Como funciona agora:
 4. se houver transição, o tile secundário é desenhado por cima com alpha controlado;
 5. na floresta, a intensidade também leva em conta a distância até trilhas curvas naturais.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Refatorado todo o sistema de chão para evitar as faixas/linhas pretas vistas no mapa.
 - O render do chão agora usa **snap de câmera em pixels inteiros**, reduzindo artefatos de subpixel.
@@ -86,7 +102,7 @@ Como o novo chão funciona:
 4. o resultado é sempre o mesmo para a mesma posição do mapa;
 5. o desenho usa arredondamento e overlap para não abrir linhas entre os blocos.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Substituídas as 5 texturas antigas de chão pelas novas texturas WebP.
 - `forest.webp` agora usa o novo chão verde/florestal.
@@ -97,7 +113,7 @@ Como o novo chão funciona:
 - Removido o atlas antigo `forest_ground_variants.webp`, que sobrescrevia a textura da Fase 1.
 - Todas as fases agora carregam diretamente suas novas texturas WebP pelo sistema padrão de tiles.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - A Fase 1 recebeu novos **props ambientais**: pedras com musgo, raízes, arbustos, tocos, troncos caídos, cogumelos, flores e pequenos marcos.
 - Os props são distribuídos junto das árvores, com variação de escala, tipo e espelhamento para reduzir repetição visual.
@@ -105,14 +121,14 @@ Como o novo chão funciona:
 - A seleção dos tiles do chão é determinística por posição, evitando cintilação/troca de textura ao mover a câmera.
 - Novos assets WebP: `forest_props.webp` e `forest_ground_variants.webp`.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Aplicados no jogo os novos **sprites de árvores da 1ª fase** (Bosque Sussurrante).
 - O cenário da fase 1 agora usa um **atlas com 11 variações de árvores e troncos**, em vez do ícone simples anterior.
 - Cada árvore do mapa pode variar em tipo, escala e espelhamento, deixando a floresta mais natural e menos repetitiva.
 - Mantida a estrutura do projeto em WebP, com novo arquivo `assets/tiles/props/forest_trees.webp`.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - XP no chão agora se aglomera automaticamente: quando 5 orbes de XP ficam próximos, viram um único orbe maior sem perder experiência.
 - O orbe aglomerado mantém a soma exata do XP dos cinco itens.
@@ -121,7 +137,7 @@ Como o novo chão funciona:
 - A cura restaura 15% da vida máxima do herói e possui visual próprio.
 - A compactação dos XP também reduz a quantidade de entidades no chão e melhora a performance em hordas longas.
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Aplicados no jogo os **novos sprites animados dos inimigos da 1ª fase** (Bosque Sussurrante), em versões mais fluidas para: comum, veloz, perseguidor, bruto e atacante à distância.
 - Os inimigos da primeira fase agora usam atlas com animações de caminhada, ataque e dano, em vez das folhas simples antigas.
@@ -129,18 +145,18 @@ Como o novo chão funciona:
 - O carregamento do jogo foi atualizado para usar `.webp` em sprites, tiros e tiles.
 
 
-## Atualização v0.10.1
+## Atualização v0.11.0
 
 - Aplicados **sprites completos para os outros 5 heróis**: Eryn (Guardiã), Mira (Bruxa), Brom (Ferreiro), Syla (Druida) e Nox (Portador).
 - Mantido Kael com seu sprite detalhado já integrado na v0.8.2.
 - Substituídos os **tiros inimigos** por projéteis em pixel art, variando conforme cada fase: floresta, pântano, ruínas, jardim de cinzas e coração da floresta.
 - Melhorada a função de desenho do player para usar atlas de animação com idle, caminhada, ataque e dano.
 
-# Grim Grove: Survivors of the Hollow — v0.10.1
+# Grim Grove: Survivors of the Hollow — v0.11.0
 
 Survival roguelite para navegador em fantasia sombria.
 
-## Correção v0.10.1
+## Correção v0.11.0
 
 - Corrigida a falha de parsing `main.js:102 Uncaught SyntaxError: Unexpected identifier '$'`.
 - HUD de objetivos/contratos reescrita com expressões explícitas.

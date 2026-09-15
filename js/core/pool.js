@@ -1,0 +1,1 @@
+export class ObjectPool {constructor(factory=()=>({}),reset=o=>o){this.factory=factory;this.reset=reset;this.free=[]}acquire(data={}){const o=this.free.pop()||this.factory();Object.assign(o,data);o._pooled=true;return o}release(o){if(!o||!o._pooled)return;this.reset(o);this.free.push(o)}}
