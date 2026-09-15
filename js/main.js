@@ -3,6 +3,9 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const canvas=$('#gameCanvas'),ctx=canvas.getContext('2d'); let raf=0;
 const SPRITES={}, TILES={}, PROPS={};
 const FOREST_PROP_ATLAS=new Image();FOREST_PROP_ATLAS.src='assets/tiles/props/forest_trees.webp';const FOREST_DECOR_ATLAS=new Image();FOREST_DECOR_ATLAS.src='assets/tiles/props/forest_props.webp';
+const GROUND_ATLASES={}, TRANSITION_ATLASES={};
+for(const n of ['forest','swamp','ruins','ashes','heart']){const a=new Image();a.src=`assets/tiles/atlases/${n}_base.webp`;GROUND_ATLASES[n]=a;const b=new Image();b.src=`assets/tiles/atlases/${n}_transition.webp`;TRANSITION_ATLASES[n]=b;}
+
 const heroKeys=['warden','ranger','witch','smith','druid','relic'], enemyKeys=['whisper','swamp','monk','flower','root'], bossKeys=['stag','slime','abbot','queen','king'];
 const HERO_SHEET_BY_ID={warden:'hero_warden_hd',ranger:'hero_ranger_hd',witch:'hero_witch_hd',smith:'hero_smith_hd',druid:'hero_druid_hd',relic:'hero_relic_hd'};
 const HERO_DRAW_SIZE={warden:80,ranger:76,witch:80,smith:84,druid:80,relic:80};
@@ -106,6 +109,73 @@ function initGame(){const h=HEROES.find(x=>x.id===save.hero),m=save.mastery[h.id
 function makeProps(){const a=[];for(let i=0;i<125;i++){const ang=Math.random()*Math.PI*2,dist=190+Math.random()*1950,kind=Math.random()<.58?'tree':'decor';a.push({x:Math.cos(ang)*dist,y:Math.sin(ang)*dist,s:kind==='tree'?(.72+Math.random()*.85):(.48+Math.random()*.5),variant:kind==='tree'?Math.floor(Math.random()*11):Math.floor(Math.random()*16),flip:Math.random()<.5,kind})}return a}
 function drawForestProp(p){if(!FOREST_PROP_ATLAS?.complete)return;const cell=192,cols=4,v=p.variant||0,sx=(v%cols)*cell,sy=Math.floor(v/cols)*cell;const size=92*p.s;ctx.save();if(p.flip){ctx.translate(p.x,p.y);ctx.scale(-1,1);ctx.drawImage(FOREST_PROP_ATLAS,sx,sy,cell,cell,-size/2,-size,size,size)}else ctx.drawImage(FOREST_PROP_ATLAS,sx,sy,cell,cell,p.x-size/2,p.y-size,size,size);ctx.restore();}
 function drawForestDecor(p){if(!FOREST_DECOR_ATLAS?.complete)return;const cell=128,cols=4,v=p.variant||0,sx=(v%cols)*cell,sy=Math.floor(v/cols)*cell;const size=72*p.s;ctx.save();if(p.flip){ctx.translate(p.x,p.y);ctx.scale(-1,1);ctx.drawImage(FOREST_DECOR_ATLAS,sx,sy,cell,cell,-size/2,-size*.55,size,size)}else ctx.drawImage(FOREST_DECOR_ATLAS,sx,sy,cell,cell,p.x-size/2,p.y-size*.55,size,size);ctx.restore();}
+
+function floorHash(x,y){let h=(x*374761393+y*668265263)>>>0;h=(h^(h>>>13))>>>0;h=Math.imul(h,1274126177)>>>0;return (h^(h>>>16))>>>0}
+function lerp(a,b,t){return a+(b-a)*t}
+function smoothstep(a,b,t){const x=Math.max(0,Math.min(1,(t-a)/(b-a)));return x*x*(3-2*x)}
+function hash01(x,y){return (floorHash(x,y)%10000)/10000}
+function valueNoise(x,y){
+  const ix=Math.floor(x), iy=Math.floor(y), fx=x-ix, fy=y-iy;
+  const v00=hash01(ix,iy), v10=hash01(ix+1,iy), v01=hash01(ix,iy+1), v11=hash01(ix+1,iy+1);
+  const sx=fx*fx*(3-2*fx), sy=fy*fy*(3-2*fy);
+  return lerp(lerp(v00,v10,sx), lerp(v01,v11,sx), sy);
+}
+function atlasVariant(tx,ty){const macro=floorHash(Math.floor(tx/3),Math.floor(ty/3))%16;const detail=floorHash(tx,ty)%100;let v=macro;if(detail<8)v=(macro+1)%16;else if(detail>91)v=(macro+5)%16;return v}
+function forestTrailStrength(wx,wy){
+  const path1=Math.abs(wy-(Math.sin(wx*0.00235)*165 + Math.sin(wx*0.00093+2.1)*60));
+  const path2=Math.abs(wx-(Math.cos(wy*0.00195+1.35)*175 + Math.sin(wy*0.00108+0.8)*80 + 120));
+  const d=Math.min(path1,path2);
+  const core=1-smoothstep(26,88,d);
+  const edge=1-smoothstep(86,145,d);
+  const rough=valueNoise(wx*0.0031, wy*0.0031);
+  return Math.max(0, Math.min(1, core*0.88 + edge*0.28 + (rough-.55)*0.16));
+}
+function transitionAlpha(stage,tx,ty,wx,wy){
+  let base=valueNoise(tx*0.23+11.7, ty*0.23+7.9);
+  if(stage==='forest'){
+    const trail=forestTrailStrength(wx,wy);
+    const dirtPatches=smoothstep(.58,.84,base)*0.28;
+    return Math.max(trail,dirtPatches);
+  }
+  if(stage==='swamp'){
+    return smoothstep(.56,.83,base)*0.48 + smoothstep(.70,.92,valueNoise(tx*0.41+31.2,ty*0.41+13.4))*0.20;
+  }
+  if(stage==='ruins'){
+    return smoothstep(.60,.85,base)*0.34;
+  }
+  if(stage==='ashes'){
+    return smoothstep(.55,.82,base)*0.40;
+  }
+  if(stage==='heart'){
+    return smoothstep(.62,.87,base)*0.30 + smoothstep(.72,.95,valueNoise(tx*0.37+71.1,ty*0.37+44.4))*0.16;
+  }
+  return 0;
+}
+function drawAtlasTile(atlas,variant,x,y,size=128){
+  const sx=(variant%4)*size, sy=Math.floor(variant/4)*size;
+  ctx.drawImage(atlas,sx,sy,size,size,x-1,y-1,size+2,size+2);
+}
+function drawGroundLayer(g,st,w,h){
+  const tile=TILES[st.tile],size=128,startX=Math.floor((g.x-w/2)/size)*size,startY=Math.floor((g.y-h/2)/size)*size,endX=g.x+w/2+size,endY=g.y+h/2+size;
+  const atlas=GROUND_ATLASES[st.tile], trans=TRANSITION_ATLASES[st.tile];
+  if(atlas?.complete){
+    ctx.fillStyle=st.ground;ctx.fillRect(g.x-w/2,g.y-h/2,w,h);
+    for(let x=startX;x<endX;x+=size)for(let y=startY;y<endY;y+=size){
+      const tx=Math.floor(x/size),ty=Math.floor(y/size),variant=atlasVariant(tx,ty),wx=x+size*.5,wy=y+size*.5;
+      drawAtlasTile(atlas,variant,x,y,size);
+      const a=transitionAlpha(st.tile,tx,ty,wx,wy);
+      if(trans?.complete&&a>.04){
+        ctx.save();ctx.globalAlpha=Math.min(.9,a);drawAtlasTile(trans,(variant+3)%16,x,y,size);ctx.restore();
+      }
+    }
+    return;
+  }
+  if(tile?.complete){
+    for(let x=startX;x<endX;x+=size)for(let y=startY;y<endY;y+=size)ctx.drawImage(tile,x-1,y-1,size+2,size+2);
+    return;
+  }
+  ctx.fillStyle=st.ground;ctx.fillRect(g.x-w/2,g.y-h/2,w,h);
+}
 function makeCaches(){const a=[];for(let i=0;i<4;i++){const ang=i*Math.PI/2+Math.random()*.65,dist=520+Math.random()*900;a.push({x:Math.cos(ang)*dist,y:Math.sin(ang)*dist,used:false})}return a}
 addEventListener('keydown',e=>{if(game){game.keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();useSpecial()}}if(e.key==='Escape'&&game)togglePause()});addEventListener('keyup',e=>{if(game)game.keys[e.key.toLowerCase()]=false});
 function loop(now){const dt=Math.min(.033,(now-last)/1000||0);last=now;if(!paused){update(dt);draw()}raf=requestAnimationFrame(loop)}
@@ -282,7 +352,7 @@ function updateHud(){
   const co=$('#contractHud');
   if(co) co.textContent=contractStatusText(g.contract);
 }
-function draw(){const g=game,st=g.stage,w=canvas.width,h=canvas.height,ox=w/2-g.x,oy=h/2-g.y;ctx.fillStyle=st.bg;ctx.fillRect(0,0,w,h);ctx.save();const sx=g.shake?(Math.random()-.5)*18*g.shake:0,sy=g.shake?(Math.random()-.5)*18*g.shake:0;ctx.translate(ox+sx,oy+sy);const tile=TILES[st.tile];if(tile?.complete){for(let x=Math.floor((g.x-w/2)/128)*128;x<g.x+w/2+128;x+=128)for(let y=Math.floor((g.y-h/2)/128)*128;y<g.y+h/2+128;y+=128)ctx.drawImage(tile,x,y,128,128)}else{ctx.fillStyle=st.ground;ctx.fillRect(g.x-w/2,g.y-h/2,w,h)}
+function draw(){const g=game,st=g.stage,w=canvas.width,h=canvas.height,ox=w/2-g.x,oy=h/2-g.y;ctx.fillStyle=st.bg;ctx.fillRect(0,0,w,h);ctx.save();const sx=g.shake?(Math.random()-.5)*18*g.shake:0,sy=g.shake?(Math.random()-.5)*18*g.shake:0;ctx.translate(Math.round(ox+sx),Math.round(oy+sy));drawGroundLayer(g,st,w,h)
  const prop=PROPS[st.tile];for(const p of g.props){if(Math.abs(p.x-g.x)<w*.65&&Math.abs(p.y-g.y)<h*.7){if(st.tile==='forest'){if(p.kind==='decor')drawForestDecor(p);else drawForestProp(p)}else if(prop?.complete)ctx.drawImage(prop,p.x-32*p.s,p.y-32*p.s,64*p.s,64*p.s)}}
  if(g.arena){ctx.save();ctx.strokeStyle='#8fd0c2aa';ctx.lineWidth=5;ctx.setLineDash([18,12]);ctx.beginPath();ctx.arc(g.arena.x,g.arena.y,g.arena.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d7fff3';ctx.font='bold 16px system-ui';ctx.fillText(`Círculo ${Math.ceil(g.arena.time)}s`,g.arena.x-42,g.arena.y-g.arena.r-12);ctx.restore()}
  for(const d of g.drops){

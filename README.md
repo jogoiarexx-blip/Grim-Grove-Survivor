@@ -1,4 +1,59 @@
-## Atualização v0.8.8
+## Atualização v0.9.0
+
+- O sistema de **atlas variado de chão** agora foi expandido para **todas as fases**.
+- Cada bioma agora possui:
+  - `*_base.webp` com 16 variações principais,
+  - `*_transition.webp` com 16 variações secundárias para mistura.
+- Foram adicionadas **transições de chão** por blending procedural:
+  - floresta: grama → terra/trilha,
+  - pântano: solo úmido → lama/charco,
+  - ruínas: pedra → terra/musgo,
+  - jardim de cinzas: solo orgânico → áreas mais áridas,
+  - coração da floresta: chão místico → áreas corrompidas/rúnicas.
+- A Fase 1 agora possui **trilhas/caminhos naturais** gerados proceduralmente, em vez de apenas manchas soltas.
+- As trilhas são fixas no mundo e seguem curvas naturais, com bordas suavizadas.
+- O render do chão continua usando:
+  - snap em pixel inteiro,
+  - overlap para eliminar frestas,
+  - escolha determinística por coordenada.
+
+Arquivos novos:
+- `assets/tiles/atlases/forest_base.webp`
+- `assets/tiles/atlases/forest_transition.webp`
+- `assets/tiles/atlases/swamp_base.webp`
+- `assets/tiles/atlases/swamp_transition.webp`
+- `assets/tiles/atlases/ruins_base.webp`
+- `assets/tiles/atlases/ruins_transition.webp`
+- `assets/tiles/atlases/ashes_base.webp`
+- `assets/tiles/atlases/ashes_transition.webp`
+- `assets/tiles/atlases/heart_base.webp`
+- `assets/tiles/atlases/heart_transition.webp`
+
+Como funciona agora:
+1. o mundo continua dividido em células de 128x128;
+2. cada célula escolhe uma variação do atlas principal;
+3. uma segunda função calcula a intensidade de transição naquele ponto;
+4. se houver transição, o tile secundário é desenhado por cima com alpha controlado;
+5. na floresta, a intensidade também leva em conta a distância até trilhas curvas naturais.
+
+## Atualização v0.9.0
+
+- Refatorado todo o sistema de chão para evitar as faixas/linhas pretas vistas no mapa.
+- O render do chão agora usa **snap de câmera em pixels inteiros**, reduzindo artefatos de subpixel.
+- Os tiles de chão agora são desenhados com **pequena sobreposição (+2 px)** para eliminar frestas entre blocos.
+- A Fase 1 recebeu um novo **atlas 4x4 com 16 variações de chão** (`forest_ground_atlas.webp`).
+- O Bosque Sussurrante agora escolhe a variação do chão por **hash determinístico de coordenadas**, formando manchas coerentes no terreno sem ficar trocando quando a câmera anda.
+- As outras fases continuam usando suas texturas atuais, mas já com o novo sistema de render sem frestas.
+- Mantidos os props, árvores e lógica visual anterior.
+
+Como o novo chão funciona:
+1. o mapa é dividido em células de 128x128;
+2. cada célula da floresta consulta um hash das coordenadas;
+3. esse hash escolhe uma entre 16 variações do atlas;
+4. o resultado é sempre o mesmo para a mesma posição do mapa;
+5. o desenho usa arredondamento e overlap para não abrir linhas entre os blocos.
+
+## Atualização v0.9.0
 
 - Substituídas as 5 texturas antigas de chão pelas novas texturas WebP.
 - `forest.webp` agora usa o novo chão verde/florestal.
@@ -9,7 +64,7 @@
 - Removido o atlas antigo `forest_ground_variants.webp`, que sobrescrevia a textura da Fase 1.
 - Todas as fases agora carregam diretamente suas novas texturas WebP pelo sistema padrão de tiles.
 
-## Atualização v0.8.8
+## Atualização v0.9.0
 
 - A Fase 1 recebeu novos **props ambientais**: pedras com musgo, raízes, arbustos, tocos, troncos caídos, cogumelos, flores e pequenos marcos.
 - Os props são distribuídos junto das árvores, com variação de escala, tipo e espelhamento para reduzir repetição visual.
@@ -17,14 +72,14 @@
 - A seleção dos tiles do chão é determinística por posição, evitando cintilação/troca de textura ao mover a câmera.
 - Novos assets WebP: `forest_props.webp` e `forest_ground_variants.webp`.
 
-## Atualização v0.8.8
+## Atualização v0.9.0
 
 - Aplicados no jogo os novos **sprites de árvores da 1ª fase** (Bosque Sussurrante).
 - O cenário da fase 1 agora usa um **atlas com 11 variações de árvores e troncos**, em vez do ícone simples anterior.
 - Cada árvore do mapa pode variar em tipo, escala e espelhamento, deixando a floresta mais natural e menos repetitiva.
 - Mantida a estrutura do projeto em WebP, com novo arquivo `assets/tiles/props/forest_trees.webp`.
 
-## Atualização v0.8.8
+## Atualização v0.9.0
 
 - XP no chão agora se aglomera automaticamente: quando 5 orbes de XP ficam próximos, viram um único orbe maior sem perder experiência.
 - O orbe aglomerado mantém a soma exata do XP dos cinco itens.
@@ -33,7 +88,7 @@
 - A cura restaura 15% da vida máxima do herói e possui visual próprio.
 - A compactação dos XP também reduz a quantidade de entidades no chão e melhora a performance em hordas longas.
 
-## Atualização v0.8.8
+## Atualização v0.9.0
 
 - Aplicados no jogo os **novos sprites animados dos inimigos da 1ª fase** (Bosque Sussurrante), em versões mais fluidas para: comum, veloz, perseguidor, bruto e atacante à distância.
 - Os inimigos da primeira fase agora usam atlas com animações de caminhada, ataque e dano, em vez das folhas simples antigas.
@@ -41,18 +96,18 @@
 - O carregamento do jogo foi atualizado para usar `.webp` em sprites, tiros e tiles.
 
 
-## Atualização v0.8.8
+## Atualização v0.9.0
 
 - Aplicados **sprites completos para os outros 5 heróis**: Eryn (Guardiã), Mira (Bruxa), Brom (Ferreiro), Syla (Druida) e Nox (Portador).
 - Mantido Kael com seu sprite detalhado já integrado na v0.8.2.
 - Substituídos os **tiros inimigos** por projéteis em pixel art, variando conforme cada fase: floresta, pântano, ruínas, jardim de cinzas e coração da floresta.
 - Melhorada a função de desenho do player para usar atlas de animação com idle, caminhada, ataque e dano.
 
-# Grim Grove: Survivors of the Hollow — v0.8.8
+# Grim Grove: Survivors of the Hollow — v0.9.0
 
 Survival roguelite para navegador em fantasia sombria.
 
-## Correção v0.8.8
+## Correção v0.9.0
 
 - Corrigida a falha de parsing `main.js:102 Uncaught SyntaxError: Unexpected identifier '$'`.
 - HUD de objetivos/contratos reescrita com expressões explícitas.
