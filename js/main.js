@@ -2,7 +2,7 @@ import {HEROES,STAGES,BLESSINGS,ENEMY_ARCHETYPES} from './data.js';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const canvas=$('#gameCanvas'),ctx=canvas.getContext('2d'); let raf=0;
 const SPRITES={}, TILES={}, PROPS={};
-const FOREST_PROP_ATLAS=new Image();FOREST_PROP_ATLAS.src='assets/tiles/props/forest_trees.webp';const FOREST_DECOR_ATLAS=new Image();FOREST_DECOR_ATLAS.src='assets/tiles/props/forest_props.webp';const FOREST_GROUND_ATLAS=new Image();FOREST_GROUND_ATLAS.src='assets/tiles/forest_ground_variants.webp';
+const FOREST_PROP_ATLAS=new Image();FOREST_PROP_ATLAS.src='assets/tiles/props/forest_trees.webp';const FOREST_DECOR_ATLAS=new Image();FOREST_DECOR_ATLAS.src='assets/tiles/props/forest_props.webp';
 const heroKeys=['warden','ranger','witch','smith','druid','relic'], enemyKeys=['whisper','swamp','monk','flower','root'], bossKeys=['stag','slime','abbot','queen','king'];
 const HERO_SHEET_BY_ID={warden:'hero_warden_hd',ranger:'hero_ranger_hd',witch:'hero_witch_hd',smith:'hero_smith_hd',druid:'hero_druid_hd',relic:'hero_relic_hd'};
 const HERO_DRAW_SIZE={warden:80,ranger:76,witch:80,smith:84,druid:80,relic:80};
@@ -106,9 +106,6 @@ function initGame(){const h=HEROES.find(x=>x.id===save.hero),m=save.mastery[h.id
 function makeProps(){const a=[];for(let i=0;i<125;i++){const ang=Math.random()*Math.PI*2,dist=190+Math.random()*1950,kind=Math.random()<.58?'tree':'decor';a.push({x:Math.cos(ang)*dist,y:Math.sin(ang)*dist,s:kind==='tree'?(.72+Math.random()*.85):(.48+Math.random()*.5),variant:kind==='tree'?Math.floor(Math.random()*11):Math.floor(Math.random()*16),flip:Math.random()<.5,kind})}return a}
 function drawForestProp(p){if(!FOREST_PROP_ATLAS?.complete)return;const cell=192,cols=4,v=p.variant||0,sx=(v%cols)*cell,sy=Math.floor(v/cols)*cell;const size=92*p.s;ctx.save();if(p.flip){ctx.translate(p.x,p.y);ctx.scale(-1,1);ctx.drawImage(FOREST_PROP_ATLAS,sx,sy,cell,cell,-size/2,-size,size,size)}else ctx.drawImage(FOREST_PROP_ATLAS,sx,sy,cell,cell,p.x-size/2,p.y-size,size,size);ctx.restore();}
 function drawForestDecor(p){if(!FOREST_DECOR_ATLAS?.complete)return;const cell=128,cols=4,v=p.variant||0,sx=(v%cols)*cell,sy=Math.floor(v/cols)*cell;const size=72*p.s;ctx.save();if(p.flip){ctx.translate(p.x,p.y);ctx.scale(-1,1);ctx.drawImage(FOREST_DECOR_ATLAS,sx,sy,cell,cell,-size/2,-size*.55,size,size)}else ctx.drawImage(FOREST_DECOR_ATLAS,sx,sy,cell,cell,p.x-size/2,p.y-size*.55,size,size);ctx.restore();}
-function forestGroundVariant(tx,ty){let h=(tx*73856093)^(ty*19349663);h=(h^(h>>>13))*1274126177;return Math.abs(h)%16}
-function drawForestGround(g,w,h){if(!FOREST_GROUND_ATLAS?.complete)return false;const cell=128,cols=4;for(let x=Math.floor((g.x-w/2)/128)*128;x<g.x+w/2+128;x+=128)for(let y=Math.floor((g.y-h/2)/128)*128;y<g.y+h/2+128;y+=128){const tx=Math.floor(x/128),ty=Math.floor(y/128),v=forestGroundVariant(tx,ty),sx=(v%cols)*cell,sy=Math.floor(v/cols)*cell;ctx.drawImage(FOREST_GROUND_ATLAS,sx,sy,cell,cell,x,y,128,128)}return true}
-
 function makeCaches(){const a=[];for(let i=0;i<4;i++){const ang=i*Math.PI/2+Math.random()*.65,dist=520+Math.random()*900;a.push({x:Math.cos(ang)*dist,y:Math.sin(ang)*dist,used:false})}return a}
 addEventListener('keydown',e=>{if(game){game.keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();useSpecial()}}if(e.key==='Escape'&&game)togglePause()});addEventListener('keyup',e=>{if(game)game.keys[e.key.toLowerCase()]=false});
 function loop(now){const dt=Math.min(.033,(now-last)/1000||0);last=now;if(!paused){update(dt);draw()}raf=requestAnimationFrame(loop)}
@@ -285,7 +282,7 @@ function updateHud(){
   const co=$('#contractHud');
   if(co) co.textContent=contractStatusText(g.contract);
 }
-function draw(){const g=game,st=g.stage,w=canvas.width,h=canvas.height,ox=w/2-g.x,oy=h/2-g.y;ctx.fillStyle=st.bg;ctx.fillRect(0,0,w,h);ctx.save();const sx=g.shake?(Math.random()-.5)*18*g.shake:0,sy=g.shake?(Math.random()-.5)*18*g.shake:0;ctx.translate(ox+sx,oy+sy);const tile=TILES[st.tile];if(st.tile==='forest'&&drawForestGround(g,w,h)){}else if(tile?.complete){for(let x=Math.floor((g.x-w/2)/128)*128;x<g.x+w/2+128;x+=128)for(let y=Math.floor((g.y-h/2)/128)*128;y<g.y+h/2+128;y+=128)ctx.drawImage(tile,x,y,128,128)}else{ctx.fillStyle=st.ground;ctx.fillRect(g.x-w/2,g.y-h/2,w,h)}
+function draw(){const g=game,st=g.stage,w=canvas.width,h=canvas.height,ox=w/2-g.x,oy=h/2-g.y;ctx.fillStyle=st.bg;ctx.fillRect(0,0,w,h);ctx.save();const sx=g.shake?(Math.random()-.5)*18*g.shake:0,sy=g.shake?(Math.random()-.5)*18*g.shake:0;ctx.translate(ox+sx,oy+sy);const tile=TILES[st.tile];if(tile?.complete){for(let x=Math.floor((g.x-w/2)/128)*128;x<g.x+w/2+128;x+=128)for(let y=Math.floor((g.y-h/2)/128)*128;y<g.y+h/2+128;y+=128)ctx.drawImage(tile,x,y,128,128)}else{ctx.fillStyle=st.ground;ctx.fillRect(g.x-w/2,g.y-h/2,w,h)}
  const prop=PROPS[st.tile];for(const p of g.props){if(Math.abs(p.x-g.x)<w*.65&&Math.abs(p.y-g.y)<h*.7){if(st.tile==='forest'){if(p.kind==='decor')drawForestDecor(p);else drawForestProp(p)}else if(prop?.complete)ctx.drawImage(prop,p.x-32*p.s,p.y-32*p.s,64*p.s,64*p.s)}}
  if(g.arena){ctx.save();ctx.strokeStyle='#8fd0c2aa';ctx.lineWidth=5;ctx.setLineDash([18,12]);ctx.beginPath();ctx.arc(g.arena.x,g.arena.y,g.arena.r,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d7fff3';ctx.font='bold 16px system-ui';ctx.fillText(`Círculo ${Math.ceil(g.arena.time)}s`,g.arena.x-42,g.arena.y-g.arena.r-12);ctx.restore()}
  for(const d of g.drops){
